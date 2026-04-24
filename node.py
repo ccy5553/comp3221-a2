@@ -97,9 +97,9 @@ class Node:
     # ------------------------------------------------------------------ #
 
     def _on_transaction(self, txn, conn):
-        ok, _ = validate_transaction(txn, self.blockchain)
+        ok, reason = validate_transaction(txn, self.blockchain)
         if ok and self.blockchain.add_to_pool(txn):
-            # FIX: Print transaction directly, NOT wrapped in type/payload
+            # Print transaction directly (NOT wrapped)
             print_json(txn)
             sys.stdout.flush()
             self._round_needed.set()
@@ -166,6 +166,8 @@ class Node:
                     if blks:
                         with proposals_lock:
                             proposals.append(blks[0])
+            except (socket.timeout, ConnectionError, OSError):
+                self._mark_crashed(addr)
             except Exception:
                 self._mark_crashed(addr)
 
@@ -196,7 +198,7 @@ class Node:
     # ------------------------------------------------------------------ #
 
     def run(self):
-        # FIX: Make threads non-daemon so they stay alive and output gets flushed
+        # Non-daemon threads so they stay alive and output gets flushed
         server_thread = threading.Thread(target=self._server_thread, daemon=False)
         consensus_thread = threading.Thread(target=self._consensus_thread, daemon=False)
         
@@ -210,7 +212,7 @@ class Node:
             pass
         finally:
             self._stop.set()
-            # FIX: Wait for threads to finish gracefully before exiting
+            # Wait for threads to finish gracefully
             server_thread.join(timeout=2.0)
             consensus_thread.join(timeout=2.0)
 

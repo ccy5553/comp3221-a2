@@ -38,8 +38,8 @@ def make_genesis_block():
 
 
 def print_json(obj):
-    """Pretty-print a dict as JSON with sort_keys and indent=2."""
-    print(json.dumps(obj, sort_keys=True, indent=2))
+    """Pretty-print a dict as JSON with sort_keys, indent=2, and correct separators."""
+    print(json.dumps(obj, sort_keys=True, indent=2, separators=(',', ': ')))
 
 
 class Blockchain:

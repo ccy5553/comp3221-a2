@@ -99,8 +99,8 @@ class Node:
     def _on_transaction(self, txn, conn):
         ok, reason = validate_transaction(txn, self.blockchain)
         if ok and self.blockchain.add_to_pool(txn):
-            # Print transaction directly (NOT wrapped)
-            print_json(txn)
+            # Print transaction WRAPPED in type/payload (per spec 5.1.1)
+            print_json({"type": "transaction", "payload": txn})
             sys.stdout.flush()
             self._round_needed.set()
         try:

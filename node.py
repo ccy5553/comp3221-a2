@@ -99,7 +99,8 @@ class Node:
     def _on_transaction(self, txn, conn):
         ok, _ = validate_transaction(txn, self.blockchain)
         if ok and self.blockchain.add_to_pool(txn):
-            print_json({"type": "transaction", "payload": txn})
+            # FIX: Print transaction directly, NOT wrapped in type/payload
+            print_json(txn)
             sys.stdout.flush()
             self._round_needed.set()
         try:
@@ -195,8 +196,13 @@ class Node:
     # ------------------------------------------------------------------ #
 
     def run(self):
-        threading.Thread(target=self._server_thread,    daemon=True).start()
-        threading.Thread(target=self._consensus_thread, daemon=True).start()
+        # FIX: Make threads non-daemon so they stay alive and output gets flushed
+        server_thread = threading.Thread(target=self._server_thread, daemon=False)
+        consensus_thread = threading.Thread(target=self._consensus_thread, daemon=False)
+        
+        server_thread.start()
+        consensus_thread.start()
+        
         try:
             while not self._stop.is_set():
                 time.sleep(0.5)
@@ -204,6 +210,9 @@ class Node:
             pass
         finally:
             self._stop.set()
+            # FIX: Wait for threads to finish gracefully before exiting
+            server_thread.join(timeout=2.0)
+            consensus_thread.join(timeout=2.0)
 
     def stop(self):
         self._stop.set()
